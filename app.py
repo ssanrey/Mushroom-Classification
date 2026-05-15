@@ -1,9 +1,11 @@
 import streamlit as st
 import joblib
 import pandas as pd
+import os
 
 # Load the saved model
-model = joblib.load("mushroom_model.pkl")
+model_path = os.path.join(os.path.dirname(__file__), "mushroom_model.pkl")
+model = joblib.load(model_path)
 
 st.title("🍄 Mushroom Edibility Predictor")
 st.write("Select the physical characteristics of your mushroom to find out if it's safe to eat.")
