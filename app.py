@@ -63,10 +63,21 @@ input_data = pd.DataFrame([{
 }])
 
 # --- Predict ---
+#if st.button("Predict"):
+#    prediction = model.predict(input_data)[0]
+#    if prediction == "p":
+#        st.error("⚠️ This mushroom is likely POISONOUS. Do not eat it.")
+#    else:
+#        st.success("✅ This mushroom is likely EDIBLE.")
+#    st.warning("Disclaimer: This tool is for educational purposes only. Never eat a wild mushroom based solely on this prediction.")
+
 if st.button("Predict"):
-    prediction = model.predict(input_data)[0]
-    if prediction == "p":
-        st.error("⚠️ This mushroom is likely POISONOUS. Do not eat it.")
-    else:
-        st.success("✅ This mushroom is likely EDIBLE.")
-    st.warning("Disclaimer: This tool is for educational purposes only. Never eat a wild mushroom based solely on this prediction.")
+    try:
+        prediction = model.predict(input_data)[0]
+        if prediction == "p":
+            st.error("⚠️ This mushroom is likely POISONOUS. Do not eat it.")
+        else:
+            st.success("✅ This mushroom is likely EDIBLE.")
+        st.warning("Disclaimer: This tool is for educational purposes only. Never eat a wild mushroom based solely on this prediction.")
+    except Exception as e:
+        st.error(f"Error: {e}")
