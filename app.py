@@ -62,10 +62,6 @@ input_data = pd.DataFrame([{
     "habitat": extract_code(habitat),
 }])
 
-st.write("Input columns:", input_data.columns.tolist())
-expected = model.named_steps["preprocessing"].transformers_[0][2]
-st.write("Expected columns:", expected)
-
 # --- Predict ---
 if st.button("Predict"):
     prediction = model.predict(input_data)[0]
