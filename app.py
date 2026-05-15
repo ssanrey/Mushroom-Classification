@@ -53,6 +53,7 @@ input_data = pd.DataFrame([{
     "stalk-surface-below-ring": extract_code(stalk_surface_below_ring),
     "stalk-color-above-ring": extract_code(stalk_color_above_ring),
     "stalk-color-below-ring": extract_code(stalk_color_below_ring),
+    "veil-type": "p",  # only one possible value in the dataset
     "veil-color": extract_code(veil_color),
     "ring-number": extract_code(ring_number),
     "ring-type": extract_code(ring_type),
