@@ -1,16 +1,25 @@
 import streamlit as st
 import joblib
+import json
 import pandas as pd
 import os
 
-# Load the saved model
-model_path = os.path.join(os.path.dirname(__file__), "mushroom_model.pkl")
-model = joblib.load(model_path)
+# Load model and encoding data
+base_dir = os.path.dirname(__file__)
+model = joblib.load(os.path.join(base_dir, "mushroom_model.pkl"))
+
+with open(os.path.join(base_dir, "encoding_data.json"), "r") as f:
+    encoding_data = json.load(f)
+
+target_encoding_maps = encoding_data["target_encoding_maps"]
+ohe_columns = encoding_data["ohe_columns"]
+STRONG_FEATURES = encoding_data["strong_features"]
+REMAINING_FEATURES = encoding_data["remaining_features"]
 
 st.title("🍄 Mushroom Edibility Predictor")
 st.write("Select the physical characteristics of your mushroom to find out if it's safe to eat.")
 
-# --- Feature options (from UCI dataset) ---
+# --- Feature options ---
 cap_shape = st.selectbox("Cap Shape", ["bell (b)", "conical (c)", "convex (x)", "flat (f)", "knobbed (k)", "sunken (s)"])
 cap_surface = st.selectbox("Cap Surface", ["fibrous (f)", "grooves (g)", "scaly (y)", "smooth (s)"])
 cap_color = st.selectbox("Cap Color", ["brown (n)", "buff (b)", "cinnamon (c)", "gray (g)", "green (r)", "pink (p)", "purple (u)", "red (e)", "white (w)", "yellow (y)"])
@@ -33,11 +42,11 @@ spore_print_color = st.selectbox("Spore Print Color", ["black (k)", "brown (n)",
 population = st.selectbox("Population", ["abundant (a)", "clustered (c)", "numerous (n)", "scattered (s)", "several (v)", "solitary (y)"])
 habitat = st.selectbox("Habitat", ["grasses (g)", "leaves (l)", "meadows (m)", "paths (p)", "urban (u)", "waste (w)", "woods (d)"])
 
-# --- Extract just the letter code from each selection ---
 def extract_code(selection):
     return selection.split("(")[-1].replace(")", "").strip()
 
-input_data = pd.DataFrame([{
+# --- Build raw input ---
+raw_input = {
     "cap-shape": extract_code(cap_shape),
     "cap-surface": extract_code(cap_surface),
     "cap-color": extract_code(cap_color),
@@ -53,28 +62,31 @@ input_data = pd.DataFrame([{
     "stalk-surface-below-ring": extract_code(stalk_surface_below_ring),
     "stalk-color-above-ring": extract_code(stalk_color_above_ring),
     "stalk-color-below-ring": extract_code(stalk_color_below_ring),
-    "veil-type": "p",  # only one possible value in the dataset
     "veil-color": extract_code(veil_color),
     "ring-number": extract_code(ring_number),
     "ring-type": extract_code(ring_type),
     "spore-print-color": extract_code(spore_print_color),
     "population": extract_code(population),
     "habitat": extract_code(habitat),
-}])
-
-# --- Predict ---
-#if st.button("Predict"):
-#    prediction = model.predict(input_data)[0]
-#    if prediction == "p":
-#        st.error("⚠️ This mushroom is likely POISONOUS. Do not eat it.")
-#    else:
-#        st.success("✅ This mushroom is likely EDIBLE.")
-#    st.warning("Disclaimer: This tool is for educational purposes only. Never eat a wild mushroom based solely on this prediction.")
+}
 
 if st.button("Predict"):
     try:
-        prediction = model.predict(input_data)[0]
-        if prediction == "p":
+        input_df = pd.DataFrame([raw_input])
+
+        # Apply target encoding to strong features
+        for col in STRONG_FEATURES:
+            mapping = target_encoding_maps[col]
+            input_df[col] = input_df[col].map(mapping).fillna(0.5)
+
+        # Apply one-hot encoding to remaining features
+        input_df = pd.get_dummies(input_df, columns=REMAINING_FEATURES)
+
+        # Align columns to match training data
+        input_df = input_df.reindex(columns=ohe_columns, fill_value=0)
+
+        prediction = model.predict(input_df)[0]
+        if prediction == 1:
             st.error("⚠️ This mushroom is likely POISONOUS. Do not eat it.")
         else:
             st.success("✅ This mushroom is likely EDIBLE.")
